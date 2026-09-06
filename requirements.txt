@@ -1,0 +1,6 @@
+openmc_data_downloader
+pandas
+numpy
+scikit-learn
+joblib
+matplotlib

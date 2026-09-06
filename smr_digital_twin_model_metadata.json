@@ -1,0 +1,14 @@
+{
+  "feature_columns": [
+    "control_rod_height_cm",
+    "enrichment",
+    "pin_pitch_cm"
+  ],
+  "target_column": "k_effective_mean",
+  "model_type": "DecisionTreeRegressor",
+  "max_depth": 8,
+  "trained_on_n_rows": 90,
+  "held_out_test_r2": 0.9868,
+  "held_out_test_mse": 0.002052701,
+  "model_selection_notes": "max_depth chosen via sensitivity sweep over [3, 5, 8, 10, None]; R^2 plateaued at depth=8 (identical results through 'unlimited'), so 8 was chosen as the natural elbow rather than an arbitrary cap. Compared against a log-featured linear regression alternative (R^2=0.9633) -- tree retained for higher accuracy, though the log-linear result confirms the underlying rod-height response is genuinely log-shaped, which the tree approximates via flat segments rather than a smooth curve."
+}
