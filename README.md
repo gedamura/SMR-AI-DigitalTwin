@@ -65,6 +65,12 @@ However, since this model uses reflective boundaries on every surface, there is 
 
 ![Surrogate Accuracy](surrogate_accuracy.png)
 
+## A Note on AI Assistance
+
+This project was developed collaboratively with Claude (Anthropic). Claude drafted the majority of the implementation code (simulation pipeline, sweep automation, dataset assembly, and ML training scripts) based on my experimental design, error reports, and requested changes. Claude also assisted in formatting this README and correcting typos/grammar in sections I wrote and revised firsthand.
+
+All simulation runs, result verification, model-selection decisions, and the technical narrative describing this project's methodology and findings were written and confirmed by myself.
+
 ---
 
 ## Development Log
