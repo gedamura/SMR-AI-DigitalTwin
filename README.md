@@ -1,3 +1,74 @@
+# SMR AI Digital Twin
+
+## Project Overview
+
+The SMR AI Digital Twin Project approximates the physics that occurs within a small modular nuclear reactor at high speeds, allowing for a fast and accurate k-effective output based on certain physical parameters. The OpenMC neutronics pipeline generates real simulation data, using variable geometry, fuel enrichment level, and control rod insertion. After obtaining the data of 90 different reactor configurations, the k-effective values are organized and consolidated into a CSV file. Using the scikit-learn module, I used the CSV to train my surrogate model to predict the k-effective value based on the physical parameters without running a simulation. This allowed me to obtain the k-effective value much faster, saving time and computation. Running these simulations take measurable amounts of time to run and output a k-effective value, but utilizing AI allows these runtimes to be reduced from 16.0 seconds to 1.1 milliseconds — making the AI predictions more than 14,000 times faster than a quick simulation. This project is a step towards tools that can be utilized as real-time reactor control or risk-free nuclear research. The simulation-based approach also allows for reactor iteration, design, and experimentation without using the time/materials and eliminating the safety risks.
+
+## Physics Specifications
+
+The model SMR is based off these parameter values' range and baseline:
+
+| Parameter | Value |
+|---|---|
+| Fuel | UO₂, enrichment 3–7% swept (0.03/0.045/0.07), 4.5% baseline |
+| Fuel pin radius | 0.4096 cm |
+| Cladding | Zircaloy-4, outer radius 0.475 cm |
+| Moderator | Light water, with `c_H_in_H2O` S(α,β) thermal scattering |
+| Absorber | B4C control rod |
+| Pin pitch | 1.10–1.42 cm swept, 1.26 cm baseline |
+| Core height | 60 cm, reflective boundaries |
+
+The variable I am tracking using the OpenMC neutronics pipeline is k-effective, represented by this equation:
+
+k-effective = [neutrons produced (n+1)] / [neutrons absorbed + neutrons leaked (n)]
+
+However, since this model uses reflective boundaries on every surface, there is no neutron leakage; neutrons that would escape are instead reflected back into the simulated cell. This effectively models an infinite repeating lattice rather than a finite, real-world reactor core, which is why the benchmark comparison in Day 49 is made against a published k∞ value rather than a true k-effective from an actual reactor.
+
+## Installation and Reproducibility Guide
+
+1. Clone this repository:
+   ```bash
+   git clone https://github.com/gedamura/SMR-AI-DigitalTwin.git
+   cd SMR-AI-DigitalTwin
+   ```
+
+2. Install OpenMC (requires conda-forge) and other required programs:
+   ```bash
+   pip install -q condacolab
+   python -c "import condacolab; condacolab.install()"
+   # restart runtime, then:
+   mamba install -y -c conda-forge openmc
+   pip install -r requirements.txt
+   ```
+
+3. Run the physics pipeline:
+   ```bash
+   python run_sweep.py       # Runs all 90 real OpenMC configurations
+   python build_dataset.py   # Assembles the real dataset from statepoints
+   ```
+
+4. Train and evaluate the surrogate model:
+   ```bash
+   python data_splitting.py      # 80/20 train/test split on all 3 features
+   python evaluate_surrogate.py  # Compares linear vs. tree, depth sensitivity sweep
+   python save_digital_twin.py   # Trains and saves the final model on full dataset
+   ```
+
+## Visual Proof & Performance Metrics
+
+| Metric | Result |
+|---|---|
+| Configurations | 10 rod heights × 3 enrichments × 3 pitches = 90 configurations |
+| R² | 0.9868 |
+| MSE | 2.05 × 10⁻³ |
+| Prediction speed vs. full simulation | 1.10 ms vs. 15.99 s |
+
+![Surrogate Accuracy](surrogate_accuracy.png)
+
+---
+
+## Development Log
+
 ### Day 49 — Benchmark Validation
 
 The baseline nuclear reactor simulation was designed to mimic the parameters referenced in the ReactorMC Serpent pin-cell tutorial, a third-party educational reference modeling a Westinghouse-style 17×17 PWR pin-cell configuration (4.5% enriched UO2 fuel, radius r=0.4096 cm, Zircaloy-4 cladding, outside radius OR=0.475 cm, pitch p=1.26 cm, reflective boundary conditions). The tutorial reports an expected k∞ range of 1.31–1.35, while my model computed a combined k-effective of 1.42166 ± 0.00127. Assuming the tutorial's expected k∞ to be theoretically true, my model would yield a percent error of 5.31%–8.52%. However, it should be noted that this reference is not a peer-reviewed benchmark report, so use of this data was solely cited for order-of-magnitude validation.
@@ -20,7 +91,7 @@ However, there are limitations to the control rod physics and geometry. The rod 
 
 ### Day 51 — Parametrizing the Geometry Compiler
 
-The function `compile_reactor_core()` was changed to accept `enrichment` and `pin_pitch` as parameters with `control_rod_height`, instead of being set to a hardcoded fuel composition and spacing. This change required me to convert `build_materials.py` from a module-level script into a `build_materials(enrichment)` function, since the fuel material's U-235 fraction cannot be set at import time if the variable needs to change per sweep configuration. To ensure changing physical parameters changes the reactor physics as expected, I simulated these three configurations to compare the k-effective value.
+The function `compile_reactor_core()` was changed to accept `enrichment` and `pin_pitch` as parameters with `control_rod_height`, instead of being set to a hardcoded fuel composition and spacing. This change required me to convert `build_materials.py` from a module-level script into a `build_materials(enrichment)` function, since the fuel material's U-235 cannot be set at import time if the variable needs to change per sweep configuration. To ensure changing physical parameters changes the reactor physics as expected, I simulated these three configurations to compare the k-effective value.
 
 | Config | Enrichment | Pitch (cm) | k-eff | Δk vs. default | Significance |
 |---|---|---|---|---|---|

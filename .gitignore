@@ -24,3 +24,4 @@ __pycache__/
 #   pipeline_failures.log           -- small, documents sweep fault tolerance
 #   surrogate_accuracy.png, sweep_sanity_plot.png, log_vs_tree_comparison.png
 # These are the actual deliverables/evidence this project produced.
+condacolab_install.log
